@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Modern Counter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Custom smooth pulse animation on value change */
+        @keyframes scaleUp {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+
+        .animate-pop {
+            animation: scaleUp 0.15s ease-in-out;
+        }
+
+        /* Glassmorphism effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Smooth scrollbar for history */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.4);
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col justify-between items-center p-4 transition-colors duration-300">
+
+    <!-- Header Navbar -->
+    <header class="w-full max-w-md flex justify-between items-center py-4 px-2">
+        <div class="flex items-center space-x-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
+                #
+            </div>
+            <h1 class="font-bold text-xl tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                PulseCount
+            </h1>
+        </div>
+        <div class="flex items-center space-x-2">
+            <!-- Audio Toggle -->
+            <button id="sound-btn" onclick="toggleSound()" class="p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300" title="Toggle Sound">
+                <i id="sound-icon" class="fas fa-volume-up text-lg"></i>
+            </button>
+            <!-- Dark Mode Toggle -->
+            <button id="theme-btn" onclick="toggleTheme()" class="p-2.5 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-600 dark:text-slate-300" title="Toggle Theme">
+                <i id="theme-icon" class="fas fa-moon text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Card Container -->
+    <main class="w-full max-w-md my-auto">
+        <div class="glass rounded-3xl p-8 shadow-xl relative overflow-hidden transition-all border border-slate-200/60 dark:border-slate-800">
+            
+            <!-- Value Display -->
+            <div class="text-center py-8">
+                <span id="counter-value" class="text-7xl sm:text-8xl font-extrabold tracking-tight inline-block select-none transition-all duration-100 text-slate-800 dark:text-white">
+                    0
+                </span>
+                <p id="target-indicator" class="text-xs font-medium text-slate-400 dark:text-slate-500 mt-2 h-4">
+                    <!-- Dynamic status text -->
+                </p>
+            </div>
+
+            <!-- Primary Buttons -->
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <button onclick="decrement()" class="group relative flex items-center justify-center py-5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 font-bold text-2xl transition-all duration-150 active:scale-95 border border-rose-500/20">
+                    <i class="fas fa-minus transition-transform group-hover:scale-110"></i>
+                </button>
+                <button onclick="increment()" class="group relative flex items-center justify-center py-5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-2xl transition-all duration-150 active:scale-95 shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-plus transition-transform group-hover:scale-110"></i>
+                </button>
+            </div>
+
+            <!-- Secondary Controls -->
+            <div class="flex items-center justify-between pt-4 border-t border-slate-200/50 dark:border-slate-800">
+                <!-- Step Control -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Step:</span>
+                    <div class="flex bg-slate-100 dark:bg-slate-800/80 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+                        <button onclick="setStep(1)" id="step-1" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-colors bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm">1</button>
+                        <button onclick="setStep(5)" id="step-5" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-800">5</button>
+                        <button onclick="setStep(10)" id="step-10" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-800">10</button>
+                    </div>
+                </div>
+
+                <!-- Reset Button -->
+                <button onclick="reset()" class="flex items-center space-x-1.5 px-3.5 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <i class="fas fa-rotate-left"></i>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Activity History Toggle -->
+        <div class="mt-4 glass rounded-2xl p-4 shadow-md transition-all">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">History Log</span>
+                <button onclick="clearHistory()" class="text-xs text-rose-500 hover:underline font-medium">Clear</button>
+            </div>
+            <div id="history-container" class="max-h-24 overflow-y-auto flex flex-col space-y-1.5 pr-1">
+                <div class="text-xs text-slate-400 text-center py-2 italic">No activity yet</div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 text-center text-xs text-slate-400">
+        Press <kbd class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-mono text-slate-600 dark:text-slate-300">Space</kbd> / <kbd class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-800 rounded font-mono text-slate-600 dark:text-slate-300">↑</kbd> to increment
+    </footer>
+
+    <script>
+        // App State Variables
+        let count = 0;
+        let step = 1;
+        let history = [];
+        let isSoundEnabled = true;
+
+        // DOM Elements
+        const counterEl = document.getElementById('counter-value');
+        const targetIndicator = document.getElementById('target-indicator');
+        const historyContainer = document.getElementById('history-container');
+        const soundIcon = document.getElementById('sound-icon');
+
+        // Initialize Audio Context for synthetic sound effects (Tone generation)
+        let audioCtx = null;
+
+        function playSound(freq = 440, type = 'sine') {
+            if (!isSoundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } catch (e) {
+                // Audio context not allowed or unsupported
+            }
+        }
+
+        function updateDisplay(delta = 0) {
+            counterEl.textContent = count;
+            
+            // Trigger animation effect
+            counterEl.classList.remove('animate-pop');
+            void counterEl.offsetWidth; // Trigger reflow
+            counterEl.classList.add('animate-pop');
+
+            // Dynamic color shift based on sign
+            if (count > 0) {
+                counterEl.className = counterEl.className.replace(/text-\w+-\d+/g, '');
+                counterEl.classList.add('text-indigo-600', 'dark:text-indigo-400');
+            } else if (count < 0) {
+                counterEl.className = counterEl.className.replace(/text-\w+-\d+/g, '');
+                counterEl.classList.add('text-rose-500', 'dark:text-rose-400');
+            } else {
+                counterEl.className = counterEl.className.replace(/text-\w+-\d+/g, '');
+                counterEl.classList.add('text-slate-800', 'dark:text-white');
+            }
+
+            // Milestone Indicator Text
+            if (count !== 0 && count % 10 === 0) {
+                targetIndicator.textContent = `🎉 Milestone reached: ${count}!`;
+            } else {
+                targetIndicator.textContent = '';
+            }
+        }
+
+        function increment() {
+            count += step;
+            playSound(520 + (count * 2), 'sine'); // Pitch rises as count goes up
+            addHistory('Increment', `+${step}`);
+            updateDisplay();
+        }
+
+        function decrement() {
+            count -= step;
+            playSound(320 + (count * 2), 'triangle');
+            addHistory('Decrement', `-${step}`);
+            updateDisplay();
+        }
+
+        function reset() {
+            if (count === 0) return;
+            count = 0;
+            playSound(220, 'square');
+            addHistory('Reset', 'Set to 0');
+            updateDisplay();
+        }
+
+        function setStep(newStep) {
+            step = newStep;
+            [1, 5, 10].forEach(s => {
+                const btn = document.getElementById(`step-${s}`);
+                if (s === newStep) {
+                    btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-colors bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm";
+                } else {
+                    btn.className = "px-2.5 py-1 text-xs font-bold rounded-lg transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-800";
+                }
+            });
+            playSound(600, 'sine');
+        }
+
+        function addHistory(action, detail) {
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            history.unshift({ action, detail, value: count, time });
+            if (history.length > 20) history.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            if (history.length === 0) {
+                historyContainer.innerHTML = `<div class="text-xs text-slate-400 text-center py-2 italic">No activity yet</div>`;
+                return;
+            }
+
+            historyContainer.innerHTML = history.map(item => `
+                <div class="flex justify-between items-center text-xs p-1.5 rounded-lg bg-slate-100/60 dark:bg-slate-800/40">
+                    <span class="font-medium text-slate-600 dark:text-slate-300">${item.action} (${item.detail})</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-800 dark:text-slate-200">Total: ${item.value}</span>
+                        <span class="text-[10px] text-slate-400">${item.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function clearHistory() {
+            history = [];
+            renderHistory();
+            playSound(180, 'sine');
+        }
+
+        function toggleSound() {
+            isSoundEnabled = !isSoundEnabled;
+            soundIcon.className = isSoundEnabled ? 'fas fa-volume-up text-lg' : 'fas fa-volume-mute text-lg text-slate-400';
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            document.getElementById('theme-icon').className = isDark ? 'fas fa-sun text-lg' : 'fas fa-moon text-lg';
+        }
+
+        // Keyboard Shortcuts
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' || e.key === ' ' || e.key === '+') {
+                e.preventDefault();
+                increment();
+            } else if (e.key === 'ArrowDown' || e.key === '-') {
+                e.preventDefault();
+                decrement();
+            } else if (e.key === 'r' || e.key === 'R') {
+                e.preventDefault();
+                reset();
+            }
+        });
+
+        // Initialize state
+        updateDisplay();
+    </script>
+</body>
+</html>
